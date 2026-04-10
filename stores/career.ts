@@ -4,6 +4,21 @@ export interface CareerRoadmapPhase {
   phase: string
   duration: string
   milestones: string[]
+  theory?: string[]
+}
+
+export interface SalaryRange {
+  junior: number
+  mid: number
+  senior: number
+  currency: string
+}
+
+export interface CareerBook {
+  title: string
+  author: string
+  description: string
+  emoji: string
 }
 
 export interface CareerVariation {
@@ -17,6 +32,12 @@ export interface CareerVariation {
   cons: string[]
   skills: string[]
   roadmap: CareerRoadmapPhase[]
+  salary_range?: SalaryRange
+  personality_types?: string[]
+  books?: CareerBook[]
+  fun_facts?: string[]
+  job_demand?: string
+  universities?: { name: string; type: string; location: string; program: string }[]
 }
 
 export interface DiscoveryResult {

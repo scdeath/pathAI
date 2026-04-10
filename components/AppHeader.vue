@@ -3,14 +3,35 @@
     :class="scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-100' : 'bg-transparent'">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
       <NuxtLink to="/" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-xl flex items-center justify-center"
-          style="background: linear-gradient(135deg, #1A73E8 0%, #0891b2 100%)">
-          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+        <!-- OrientaAI compass logo -->
+        <div class="w-8 h-8 shrink-0">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+            <defs>
+              <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1A73E8"/>
+                <stop offset="100%" stop-color="#0891b2"/>
+              </linearGradient>
+              <linearGradient id="needleGrad" x1="16" y1="6" x2="16" y2="26" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#bfdbfe"/>
+              </linearGradient>
+            </defs>
+            <!-- Background circle -->
+            <circle cx="16" cy="16" r="15" fill="url(#logoGrad)"/>
+            <!-- Outer ring tick marks -->
+            <circle cx="16" cy="16" r="12" stroke="white" stroke-width="0.5" stroke-dasharray="2 3.76" stroke-opacity="0.4" fill="none"/>
+            <!-- Compass needle - north (pointing up-right, lit) -->
+            <polygon points="16,4 18.2,16 16,14.5" fill="url(#needleGrad)"/>
+            <!-- Compass needle - south (pointing down-left, dim) -->
+            <polygon points="16,28 13.8,16 16,17.5" fill="white" fill-opacity="0.3"/>
+            <!-- Center dot -->
+            <circle cx="16" cy="16" r="1.8" fill="white"/>
+            <!-- Cardinal N label -->
+            <text x="16" y="10.5" text-anchor="middle" font-size="3.2" font-weight="700" fill="white" fill-opacity="0.7" font-family="system-ui">N</text>
           </svg>
         </div>
         <span class="font-bold text-slate-900 text-lg tracking-tight group-hover:opacity-80 transition-opacity">
-          PathAI
+          OrientaAI
         </span>
       </NuxtLink>
 

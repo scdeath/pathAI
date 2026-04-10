@@ -33,12 +33,13 @@
         <button
           :disabled="!canSubmit"
           class="btn-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+          :class="loading ? 'animate-pulse-subtle' : ''"
           @click="handleSubmit">
           <template v-if="loading">
             <div class="dot-loader flex items-center gap-0.5">
               <span></span><span></span><span></span>
             </div>
-            <span>Analizando...</span>
+            <span class="transition-all duration-500">{{ currentLoadingStep }}</span>
           </template>
           <template v-else>
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -91,6 +92,34 @@ const suggestions = [
 ]
 
 const canSubmit = computed(() => !props.loading && inputValue.value.trim().length >= 5)
+
+const loadingSteps = [
+  'Analizando tus intereses...',
+  'Explorando el mercado laboral...',
+  'Generando rutas de carrera...',
+  'Preparando tu hoja de ruta...',
+]
+const loadingStepIndex = ref(0)
+let loadingInterval: ReturnType<typeof setInterval> | null = null
+const currentLoadingStep = computed(() => loadingSteps[loadingStepIndex.value])
+
+watch(() => props.loading, (val) => {
+  if (val) {
+    loadingStepIndex.value = 0
+    loadingInterval = setInterval(() => {
+      loadingStepIndex.value = (loadingStepIndex.value + 1) % loadingSteps.length
+    }, 1800)
+  } else {
+    if (loadingInterval) {
+      clearInterval(loadingInterval)
+      loadingInterval = null
+    }
+  }
+})
+
+onUnmounted(() => {
+  if (loadingInterval) clearInterval(loadingInterval)
+})
 
 function autoResize() {
   if (!textareaRef.value) return
