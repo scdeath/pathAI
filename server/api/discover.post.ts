@@ -371,6 +371,10 @@ export default defineEventHandler(async (event) => {
   const userMessage = `Texto de la persona: "${trimmedQuery}"`
   let rawText = ''
 
+  if (!config.githubToken && !config.groqApiKey && !config.ollamaUrl) {
+    console.error('[KoraChile] ⛔ Ninguna variable de proveedor configurada. Define APY_GIT o GROQ en las variables de entorno.')
+  }
+
   // --- 1. GitHub Models / Meta-Llama-3.1-8B-Instruct (PRIORIDAD — rápido) ---
   if (!rawText && config.githubToken) {
     try {
@@ -507,7 +511,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // --- 3. Ollama local (fallback) ---
+  // --- 4. Ollama local (fallback) ---
   if (!rawText && config.ollamaUrl) {
     try {
       console.log(`[KoraChile] Intentando con Ollama (${config.ollamaModel})...`)
@@ -539,7 +543,10 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!rawText) {
-    throw createError({ statusCode: 502, message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica Groq y Ollama.' })
+    throw createError({
+      statusCode: 502,
+      message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica que las variables APY_GIT (GitHub Models) o GROQ estén configuradas correctamente en el entorno.',
+    })
   }
 
   // Parseo robusto + autorreparación si el modelo devuelve JSON truncado
