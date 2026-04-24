@@ -25,6 +25,7 @@ export default defineNuxtConfig({
   ],
   css: ['~/assets/css/main.css'],
   nitro: {
+    preset: 'vercel',
     // @xenova/transformers usa onnxruntime-node (binarios) y sharp: deben
     // quedar como external para que Nitro no intente bundlearlos.
     externals: {
