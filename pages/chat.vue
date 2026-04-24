@@ -179,10 +179,19 @@
       </div>
     </Transition>
 
-    <!-- ── Contenido principal (offset dinámico por sidebar) ── -->
+    <!-- Backdrop móvil cuando sidebar está abierto -->
+    <Transition name="fade-icon">
+      <div
+        v-if="showSidebar"
+        class="fixed inset-0 z-[59] bg-black/40 backdrop-blur-sm sm:hidden"
+        @click="showSidebar = false"
+      />
+    </Transition>
+
+    <!-- ── Contenido principal (offset dinámico por sidebar solo en desktop) ── -->
     <main
       class="absolute top-16 right-0 bottom-0 overflow-hidden px-3 sm:px-4 pb-4 sm:pb-6 pt-4 sm:pt-6"
-      :style="{ left: (showSidebar ? 288 : 0) + 'px' }">
+      :style="{ left: isMobile ? '0px' : (showSidebar ? 288 : 0) + 'px' }">
       <div class="mx-auto w-full h-full max-w-4xl">
         <section class="relative h-full flex flex-col overflow-hidden rounded-3xl chat-glass-card">
 
@@ -505,7 +514,16 @@ const historyLoading = ref(false)
 const compactMode = false
 const latestProgramCards = ref<ProgramCard[]>([])
 const activeSessionId = ref<string>('')
+const isMobile = ref(false)
 const showSidebar = ref(true)
+
+onMounted(() => {
+  const checkMobile = () => { isMobile.value = window.innerWidth < 640 }
+  checkMobile()
+  if (isMobile.value) showSidebar.value = false
+  window.addEventListener('resize', checkMobile)
+  onUnmounted(() => window.removeEventListener('resize', checkMobile))
+})
 const sessions = ref<ChatSession[]>([])
 const sessionsLoading = ref(false)
 const chatResetting = ref(false)
