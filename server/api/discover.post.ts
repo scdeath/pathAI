@@ -372,7 +372,7 @@ export default defineEventHandler(async (event) => {
   let rawText = ''
 
   if (!config.githubToken && !config.groqApiKey && !config.ollamaUrl) {
-    console.error('[KoraChile] ⛔ Ninguna variable de proveedor configurada. Define APY_GIT o GROQ en las variables de entorno.')
+    console.warn('[KoraChile] ⚠️ Ninguna variable de proveedor configurada. Define APY_GIT, GROQ u OLLAMA_URL en las variables de entorno.')
   }
 
   // --- 1. GitHub Models / Meta-Llama-3.1-8B-Instruct (PRIORIDAD — rápido) ---
@@ -545,7 +545,7 @@ export default defineEventHandler(async (event) => {
   if (!rawText) {
     throw createError({
       statusCode: 502,
-      message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica que las variables APY_GIT (GitHub Models) o GROQ estén configuradas correctamente en el entorno.',
+      message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica que las variables APY_GIT (GitHub Models), GROQ o OLLAMA_URL estén configuradas correctamente en el entorno.',
     })
   }
 
