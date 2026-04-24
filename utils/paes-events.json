@@ -1,0 +1,120 @@
+{
+  "year": 2026,
+  "events": [
+    {
+      "id": "inv-inscripcion",
+      "label": "Inscripción PAES Invierno",
+      "date": "2026-04-20",
+      "dateEnd": "2026-05-06",
+      "description": "Período de inscripción para rendir la PAES de Invierno. Solo pueden inscribirse egresados de años anteriores.",
+      "type": "registration",
+      "process": "invierno",
+      "url": "https://demre.cl/procesos/proceso-invierno"
+    },
+    {
+      "id": "inv-examen",
+      "label": "PAES de Invierno 2026",
+      "date": "2026-07-04",
+      "dateEnd": "2026-07-05",
+      "description": "Rendición de la Prueba de Acceso a la Educación Superior — proceso de invierno. Disponible: CLyC, M1, M2, Historia, Ciencias.",
+      "type": "exam",
+      "process": "invierno",
+      "url": "https://demre.cl/procesos/proceso-invierno"
+    },
+    {
+      "id": "inv-resultados",
+      "label": "Resultados PAES Invierno",
+      "date": "2026-07-28",
+      "description": "Publicación de puntajes PAES de Invierno en el portal del DEMRE.",
+      "type": "result",
+      "process": "invierno",
+      "url": "https://puntajes.demre.cl"
+    },
+    {
+      "id": "inv-postulacion",
+      "label": "Postulación admisión invierno",
+      "date": "2026-08-03",
+      "dateEnd": "2026-08-05",
+      "description": "Período de postulación a programas con vacantes para el proceso de invierno.",
+      "type": "deadline",
+      "process": "invierno",
+      "url": "https://acceso.mineduc.cl"
+    },
+    {
+      "id": "inv-seleccion",
+      "label": "Resultados selección invierno",
+      "date": "2026-08-10",
+      "description": "Publicación de resultados de selección y listas de espera para el proceso de invierno.",
+      "type": "result",
+      "process": "invierno",
+      "url": "https://acceso.mineduc.cl"
+    },
+    {
+      "id": "reg-inscripcion",
+      "label": "Inscripción PAES Regular",
+      "date": "2026-09-21",
+      "dateEnd": "2026-10-09",
+      "description": "Período de inscripción para rendir la PAES en el proceso regular. Disponible para 4° medio y egresados.",
+      "type": "registration",
+      "process": "regular",
+      "url": "https://demre.cl/procesos/proceso-regular"
+    },
+    {
+      "id": "reg-simulacro",
+      "label": "Ensayo PAES oficial",
+      "date": "2026-10-17",
+      "description": "Ensayo oficial organizado por el DEMRE. Permite familiarizarse con el formato, tiempos y plataforma de rendición.",
+      "type": "info",
+      "process": "regular",
+      "url": "https://demre.cl"
+    },
+    {
+      "id": "reg-examen",
+      "label": "PAES Regular 2026",
+      "date": "2026-11-28",
+      "dateEnd": "2026-11-29",
+      "description": "Rendición de la PAES proceso regular. Pruebas: CLyC (obligatoria), M1 (obligatoria), M2, Historia, Ciencias (electivas).",
+      "type": "exam",
+      "process": "regular",
+      "url": "https://demre.cl/procesos/proceso-regular"
+    },
+    {
+      "id": "reg-resultados",
+      "label": "Resultados PAES Regular",
+      "date": "2026-12-21",
+      "description": "Publicación de puntajes PAES proceso regular en el portal del DEMRE.",
+      "type": "result",
+      "process": "regular",
+      "url": "https://puntajes.demre.cl"
+    },
+    {
+      "id": "reg-postulacion",
+      "label": "Postulación admisión regular",
+      "date": "2026-12-23",
+      "dateEnd": "2026-12-29",
+      "description": "Período de postulación a universidades CRUCH y privadas adscritas al sistema centralizado.",
+      "type": "deadline",
+      "process": "regular",
+      "url": "https://acceso.mineduc.cl"
+    },
+    {
+      "id": "reg-seleccion",
+      "label": "Resultados selección regular",
+      "date": "2027-01-06",
+      "description": "Publicación de resultados de selección. Inicio del proceso de matrícula.",
+      "type": "result",
+      "process": "regular",
+      "url": "https://acceso.mineduc.cl"
+    },
+    {
+      "id": "reg-matricula",
+      "label": "Matrícula 1ª etapa",
+      "date": "2027-01-07",
+      "dateEnd": "2027-01-09",
+      "description": "Primera etapa de matrícula para seleccionados en el proceso regular.",
+      "type": "deadline",
+      "process": "regular",
+      "url": "https://acceso.mineduc.cl"
+    }
+  ]
+}

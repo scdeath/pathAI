@@ -37,3 +37,10 @@ CREATE POLICY "Anyone can read discovery sessions"
   FOR SELECT
   TO anon
   USING (true);
+
+CREATE TABLE rate_limits (
+  id bigint generated always as identity primary key,
+  ip text not null,
+  created_at timestamptz not null default now()
+);
+CREATE INDEX ON rate_limits (ip, created_at);

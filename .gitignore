@@ -6,4 +6,17 @@ node_modules
 .output
 .data
 .env
+.env.*
 dist
+
+# Scripts de migración/seed (no necesarios en producción)
+convertidor/
+scripts/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.local

@@ -42,8 +42,12 @@
             <span class="transition-all duration-500">{{ currentLoadingStep }}</span>
           </template>
           <template v-else>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            <!-- Brujula KoraChile -->
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <polygon points="12,5 14,12 12,11" fill="currentColor" stroke="none" />
+              <polygon points="12,19 10,12 12,13" fill="currentColor" fill-opacity="0.5" stroke="none" />
+              <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
             </svg>
             <span>Descubrir</span>
           </template>
@@ -57,7 +61,7 @@
 
     <div class="mt-4 flex flex-wrap justify-center gap-2">
       <button
-        v-for="suggestion in suggestions"
+        v-for="suggestion in rotatedSuggestions"
         :key="suggestion"
         class="px-3.5 py-1.5 rounded-full text-xs font-medium text-slate-600 bg-slate-100 hover:bg-primary-50 hover:text-primary-700 border border-slate-200 hover:border-primary-200 transition-all duration-200"
         @click="useSuggestion(suggestion)">
@@ -89,9 +93,36 @@ const suggestions = [
   'Enfoque en personas y pensamiento estratégico',
   'Construir cosas con código',
   'Ciencia y resolver problemas complejos',
+  'Disfruto ayudar a otros a sentirse mejor',
+  'Me atraen los negocios y la estrategia',
+  'Me fascina la naturaleza y el medio ambiente',
+  'Me interesa el diseño y la experiencia visual',
+  'Me motiva investigar y descubrir cosas nuevas',
+  'Me gusta liderar y coordinar equipos',
+  'Me inspira comunicar y contar historias',
+  'Me gustan las máquinas y entender cómo funcionan',
+  'Amo los números, la lógica y resolver puzzles',
+  'Quiero emprender algo propio algún día',
 ]
 
+// Sugerencias visibles — se asignan en onMounted para evitar hydration mismatch.
+// En SSR siempre se muestran las 5 primeras (fijas); en cliente se mezclan.
+const rotatedSuggestions = ref<string[]>(suggestions.slice(0, 5))
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 const canSubmit = computed(() => !props.loading && inputValue.value.trim().length >= 5)
+
+onMounted(() => {
+  rotatedSuggestions.value = shuffle(suggestions).slice(0, 5)
+})
 
 const loadingSteps = [
   'Analizando tus intereses...',

@@ -1,9 +1,10 @@
 <template>
   <div class="min-h-screen flex flex-col">
+    <DiscoveringModal :visible="store.isLoading" />
     <AppHeader />
 
     <main class="flex-1 flex flex-col">
-      <section class="relative flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-16 min-h-screen overflow-hidden">
+      <section class="relative flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-24 pb-14 sm:pb-16 min-h-screen overflow-hidden">
         <div class="absolute inset-0 -z-10 overflow-hidden">
           <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] rounded-full opacity-20 blur-2xl pointer-events-none"
             style="background: radial-gradient(ellipse at center, #bfdbfe 0%, #a5f3fc 50%, transparent 70%); will-change: auto;">
@@ -13,20 +14,17 @@
           </div>
         </div>
 
-        <div class="w-full max-w-3xl mx-auto text-center space-y-8">
+        <div class="w-full max-w-3xl mx-auto text-center space-y-7 sm:space-y-8">
           <div class="space-y-4 animate-fade-up">
-            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-medium">
-              <div class="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse"></div>
-              Descubre tu carrera
-            </div>
+           
 
-            <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] sm:leading-tight">
               Encuentra tu
               <span class="gradient-text"> carrera perfecta</span>
             </h1>
 
-            <p class="text-xl text-slate-500 max-w-xl mx-auto leading-relaxed font-normal">
-              Cuéntanos sobre tus intereses y pasiones. Nuestra IA generará caminos de carrera personalizados con hojas de ruta paso a paso.
+            <p class="text-base sm:text-lg lg:text-xl text-slate-500 max-w-xl mx-auto leading-relaxed font-normal px-1">
+              Cuéntanos sobre tus intereses y pasiones. Te mostraremos todas las alternativas de carreras que existen en el país y que conocerás en base a tus gustos.
             </p>
           </div>
 
@@ -58,34 +56,10 @@
           </div>
         </div>
       </section>
-
-      <section id="how-it-works" class="px-6 py-20 bg-surface-50 border-t border-slate-100">
-        <div class="max-w-5xl mx-auto">
-          <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Cómo funciona</h2>
-            <p class="text-slate-500 mt-2">Tres pasos hacia tu carrera futura</p>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div
-              v-for="(step, i) in steps"
-              :key="i"
-              class="card p-6 text-center space-y-3">
-              <div class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center text-xl"
-                :style="`background: ${step.bg}`">
-                {{ step.emoji }}
-              </div>
-              <div class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-xs font-bold mx-auto">
-                {{ i + 1 }}
-              </div>
-              <h3 class="font-bold text-slate-900">{{ step.title }}</h3>
-              <p class="text-sm text-slate-500 leading-relaxed">{{ step.desc }}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+ 
 
       <!-- Preview section -->
-      <section class="px-6 py-20 bg-white border-t border-slate-100 overflow-hidden">
+      <section class="px-4 sm:px-6 py-16 sm:py-20 bg-white border-t border-slate-100 overflow-hidden">
         <div class="max-w-6xl mx-auto">
           <div class="text-center mb-14">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-50 border border-accent-100 text-accent-700 text-xs font-semibold uppercase tracking-wider mb-4">
@@ -142,14 +116,14 @@
         </div>
       </section>
 
-      <!-- Testimonials section -->
-      <section class="px-6 py-20 bg-surface-50 border-t border-slate-100">
+      
+      <section class="px-4 sm:px-6 py-16 sm:py-20 bg-surface-50 border-t border-slate-100">
         <div class="max-w-5xl mx-auto">
           <div class="text-center mb-12">
             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold uppercase tracking-wider mb-4">
               Usuarios reales
             </span>
-            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Lo que dicen sobre OrientaAI</h2>
+            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Lo que dicen sobre KoraChile</h2>
             <p class="text-slate-500 mt-2">Jóvenes chilenos que encontraron su camino</p>
           </div>
 
@@ -207,10 +181,68 @@
       </section>
     </main>
 
-    <footer class="border-t border-slate-100 py-8 px-6">
-      <div class="max-w-6xl mx-auto flex items-center justify-between text-sm text-slate-400">
-        <span class="font-medium">OrientaAI</span>
-       </div>
+    <footer class="bg-white border-t border-slate-100 mt-0">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-14">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+          <!-- Brand -->
+          <div class="md:col-span-2 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 shrink-0">
+                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+                  <defs>
+                    <linearGradient id="fLogoGrad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#1A73E8"/>
+                      <stop offset="100%" stop-color="#0891b2"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="16" cy="16" r="15" fill="url(#fLogoGrad)"/>
+                  <polygon points="16,4 18.2,16 16,14.5" fill="white"/>
+                  <polygon points="16,28 13.8,16 16,17.5" fill="white" fill-opacity="0.3"/>
+                  <circle cx="16" cy="16" r="1.8" fill="white"/>
+                </svg>
+              </div>
+              <span class="font-bold text-slate-900 text-lg tracking-tight">KoraChile</span>
+            </div>
+            <p class="text-sm text-slate-500 leading-relaxed max-w-sm">
+              Orientación vocacional para Chile con datos oficiales de Mineduc/SIES e inteligencia artificial.
+              Gratis, privado y sin publicidad.
+            </p>
+            <div class="flex items-center gap-2 text-xs text-slate-400">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Datos SIES 2025-2026
+              </span>
+            </div>
+          </div>
+
+          <!-- Producto -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Producto</h4>
+            <ul class="space-y-2 text-sm">
+              <li><NuxtLink to="/" class="text-slate-600 hover:text-primary-600 transition-colors">Descubrir carrera</NuxtLink></li>
+              <li><NuxtLink to="/explore" class="text-slate-600 hover:text-primary-600 transition-colors">Explorar</NuxtLink></li>
+              <li><NuxtLink to="/compare" class="text-slate-600 hover:text-primary-600 transition-colors">Comparar</NuxtLink></li>
+              <li><NuxtLink to="/chat" class="text-slate-600 hover:text-primary-600 transition-colors">Chat con Kora</NuxtLink></li>
+            </ul>
+          </div>
+
+          <!-- Recursos -->
+          <div class="space-y-3">
+            <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Recursos</h4>
+            <ul class="space-y-2 text-sm">
+              <li><a href="https://www.mifuturo.cl" target="_blank" rel="noopener" class="text-slate-600 hover:text-primary-600 transition-colors">MiFuturo.cl</a></li>
+              <li><a href="https://www.mineduc.cl" target="_blank" rel="noopener" class="text-slate-600 hover:text-primary-600 transition-colors">Mineduc</a></li>
+              <li><a href="https://acceso.mineduc.cl" target="_blank" rel="noopener" class="text-slate-600 hover:text-primary-600 transition-colors">Acceso a la educación</a></li>
+              <li><NuxtLink to="/#how-it-works" class="text-slate-600 hover:text-primary-600 transition-colors">Cómo funciona</NuxtLink></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <span>© {{ new Date().getFullYear() }} KoraChile · Hecho en Chile 🇨🇱</span>
+          <span>Fuente de datos: Mineduc / SIES · Uso responsable — la IA puede equivocarse.</span>
+        </div>
+      </div>
     </footer>
   </div>
 </template>
@@ -219,7 +251,7 @@
 import { useCareerStore } from '~/stores/career'
 
 useHead({
-  title: 'OrientaAI — Descubre Tu Carrera',
+  title: 'KoraChile — Descubre Tu Carrera',
   meta: [
     { name: 'description', content: 'Plataforma de descubrimiento de carrera para Chile, impulsada por IA. Describe tus intereses y obtén hojas de ruta de carrera personalizadas para el mercado chileno.' }
   ]
@@ -228,29 +260,27 @@ useHead({
 const router = useRouter()
 const store = useCareerStore()
 
-const SearchBar = defineAsyncComponent(() => import('~/components/SearchBar.vue'))
-const QuizFlow = defineAsyncComponent(() => import('~/components/QuizFlow.vue'))
+const SearchBar = defineAsyncComponent(() => import('~/components/discovery/SearchBar.vue'))
+const QuizFlow = defineAsyncComponent(() => import('~/components/discovery/QuizFlow.vue'))
+const DiscoveringModal = defineAsyncComponent(() => import('~/components/discovery/DiscoveringModal.vue'))
 
 const showQuiz = ref(false)
 
 const steps = [
   {
-    emoji: '✍️',
+    icon: 'profile',
     title: 'Describe tu perfil',
     desc: 'Cuéntanos sobre tus intereses, habilidades y qué te emociona en la vida.',
-    bg: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
   },
   {
-    emoji: '🤖',
+    icon: 'ai',
     title: 'IA analiza',
     desc: 'Nuestra IA procesa tu perfil y genera 3 carreras personalizadas para Chile.',
-    bg: 'linear-gradient(135deg, #ecfeff, #cffafe)',
   },
   {
-    emoji: '🗺️',
+    icon: 'roadmap',
     title: 'Obtén tu roadmap',
     desc: 'Explora ventajas, sueldos reales en CLP, libros y plan de acción paso a paso.',
-    bg: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
   },
 ]
 
@@ -296,7 +326,7 @@ const previewCards = [
 const testimonials = [
   {
     stars: 5,
-    text: 'No sabía qué estudiar después del colegio. OrientaAI me mostró que el diseño UX era perfecto para mí. Hoy trabajo en una startup y amo lo que hago.',
+    text: 'No sabía qué estudiar después del colegio. KoraChile me mostró que el diseño UX era perfecto para mí. Hoy trabajo en una startup y amo lo que hago.',
     name: 'Valentina R.',
     role: 'Diseñadora UX, 22 años · Santiago',
     initials: 'VR',
@@ -312,7 +342,7 @@ const testimonials = [
   },
   {
     stars: 5,
-    text: 'Tengo 37 años y quería cambiarme de rubro. OrientaAI me orientó hacia análisis de datos y los sueldos que mostró eran reales. Ya llevo 6 meses estudiando.',
+    text: 'Tengo 37 años y quería cambiarme de rubro. KoraChile me orientó hacia análisis de datos y los sueldos que mostró eran reales. Ya llevo 6 meses estudiando.',
     name: 'Patricia M.',
     role: 'Reconversión laboral · Viña del Mar',
     initials: 'PM',
@@ -371,17 +401,36 @@ const data = await $fetch<{ sessionId: string; result: any }>('/api/discover', {
   }
 }
 
-function handleQuizComplete(answers: Record<string, string>) {
-  // Guardar respuestas del quiz en el store
-  store.setQuizAnswers(answers)
+function handleQuizComplete(result: {
+  answers: Record<string, string>
+  riasec_scores: Record<string, number>
+  holland_code: string
+  holland_profile: string[]
+  mbti_type: string
+  free_text?: string
+}) {
+  // Guardar respuestas originales por compatibilidad
+  store.setQuizAnswers(result.answers)
 
-  // Crear una query a partir de las respuestas
-  const interests = answers.interests || ''
-  const experience = answers.experience || ''
-  const learningStyle = answers['learning-style'] || ''
-  
-  const query = `Intereses: ${interests}, Experiencia: ${experience}, Estilo de aprendizaje: ${learningStyle}. Genérame carreras que encajen con mi perfil.`
-  
+  // Construir query con el perfil vocacional detectado
+  const topScores = Object.entries(result.riasec_scores)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([letter, score]) => `${letter}=${score}`)
+    .join(', ')
+
+  const freeBlock = result.free_text
+    ? `\n\nAdemás, la persona cuenta sobre sí:\n"${result.free_text}"\n`
+    : ''
+
+  const query = `Perfil vocacional detectado mediante quiz RIASEC + MBTI:
+
+- Código Holland (RIASEC): ${result.holland_code} (${result.holland_profile.join(', ')}).
+- Puntajes RIASEC: ${topScores} (escala 0-2 por dimensión).
+- Tipo MBTI: ${result.mbti_type}.${freeBlock}
+
+En base a este perfil, recomiéndame 3 carreras u oficios que encajen naturalmente con esta combinación de intereses y personalidad. Prioriza opciones realistas y disponibles en Chile. Considera cómo el código Holland ${result.holland_code} y el tipo ${result.mbti_type} se complementan en cada carrera sugerida${result.free_text ? ', e integra los detalles personales que compartió' : ''}.`
+
   handleDiscover(query)
 }
 </script>

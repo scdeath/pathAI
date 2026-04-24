@@ -21,6 +21,19 @@ export interface CareerBook {
   emoji: string
 }
 
+export interface NotablePerson {
+  name: string
+  role: string
+  country: string
+  contribution: string
+  emoji: string
+}
+
+export interface CurriculumSemester {
+  semester: number
+  subjects: string[]
+}
+
 export interface CareerVariation {
   id: string
   title: string
@@ -38,6 +51,8 @@ export interface CareerVariation {
   fun_facts?: string[]
   job_demand?: string
   universities?: { name: string; type: string; location: string; program: string }[]
+  notable_people?: NotablePerson[]
+  curriculum?: CurriculumSemester[]
 }
 
 export interface DiscoveryResult {
@@ -67,14 +82,10 @@ export const useCareerStore = defineStore('career', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   const cache = ref<Map<string, { result: DiscoveryResult; sessionId: string }>>(new Map())
-  
-  // Autenticación
-  const user = ref<User | null>(null)
-  const isAuthenticated = ref(false)
-  
+
   // Carreras guardadas
   const savedCareers = ref<SavedCareer[]>([])
-  
+
   // Quiz
   const quizAnswers = ref<Record<string, string>>({})
 
@@ -102,13 +113,28 @@ export const useCareerStore = defineStore('career', () => {
     error.value = msg
   }
 
-  function setUser(userData: User | null) {
-    user.value = userData
-    isAuthenticated.value = !!userData
-  }
-
   function setQuizAnswers(answers: Record<string, string>) {
     quizAnswers.value = answers
+  }
+
+  // ── Persistencia local de carreras guardadas ──
+  const SAVED_KEY = 'KoraChile:saved-careers'
+
+  function persistSavedCareers() {
+    if (typeof window === 'undefined') return
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(savedCareers.value))
+    } catch { /* quota exceeded */ }
+  }
+
+  function loadSavedCareers() {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem(SAVED_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) savedCareers.value = parsed
+    } catch { /* corrupt data */ }
   }
 
   function addSavedCareer(career: CareerVariation, notes: string = '') {
@@ -120,17 +146,20 @@ export const useCareerStore = defineStore('career', () => {
       notes,
     }
     savedCareers.value.push(saved)
+    persistSavedCareers()
     return saved
   }
 
   function removeSavedCareer(id: string) {
     savedCareers.value = savedCareers.value.filter(c => c.id !== id)
+    persistSavedCareers()
   }
 
   function updateSavedCareerNotes(id: string, notes: string) {
     const career = savedCareers.value.find(c => c.id === id)
     if (career) {
       career.notes = notes
+      persistSavedCareers()
     }
   }
 
@@ -148,8 +177,6 @@ export const useCareerStore = defineStore('career', () => {
     isLoading,
     error,
     cache,
-    user,
-    isAuthenticated,
     savedCareers,
     quizAnswers,
     setResult,
@@ -157,11 +184,11 @@ export const useCareerStore = defineStore('career', () => {
     setSelectedCareer,
     setLoading,
     setError,
-    setUser,
     setQuizAnswers,
     addSavedCareer,
     removeSavedCareer,
     updateSavedCareerNotes,
+    loadSavedCareers,
     clear,
   }
 })

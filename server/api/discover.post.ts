@@ -1,100 +1,350 @@
 import { createClient } from '@supabase/supabase-js'
 
-// --- Rate limiter en memoria ---
-const RATE_LIMIT_MAX = 10        // max requests por ventana
-const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000  // 10 minutos
+// --- Rate limiter via Supabase (funciona en entornos serverless/Vercel) ---
+async function checkRateLimit(ip: string): Promise<void> {
+  const config = useRuntimeConfig()
+  // Rate limiter requiere service_role (tabla rate_limits no es accesible con anon).
+  const key = config.supabaseServiceKey
+  if (!key) {
+    console.error('[KoraChile] Rate limit deshabilitado: falta SUPABASE_SERVICE_ROLE_KEY')
+    return
+  }
+  const supabase = createClient(config.public.supabaseUrl, key)
 
-const ipRequestMap = new Map<string, { count: number; resetAt: number }>()
+  const windowStart = new Date(Date.now() - 10 * 60 * 1000).toISOString()
 
-function checkRateLimit(ip: string): void {
-  const now = Date.now()
-  const entry = ipRequestMap.get(ip)
+  const { count, error: countError } = await supabase
+    .from('rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip', ip)
+    .gte('created_at', windowStart)
 
-  if (!entry || now > entry.resetAt) {
-    ipRequestMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+  if (countError) {
+    // Fail-open intencional: no bloqueamos si Supabase falla, pero lo
+    // registramos como ERROR (no warn) para que sea visible en monitoreo.
+    console.error('[KoraChile] Rate limit check FAIL-OPEN:', countError.message)
     return
   }
 
-  if (entry.count >= RATE_LIMIT_MAX) {
-    const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000)
-    throw createError({
-      statusCode: 429,
-      message: `Demasiadas solicitudes. Intenta de nuevo en ${retryAfterSec} segundos.`,
-    })
+  if ((count ?? 0) >= 10) {
+    throw createError({ statusCode: 429, message: 'Demasiadas solicitudes. Intenta de nuevo en 10 minutos.' })
   }
 
-  entry.count++
+  await supabase.from('rate_limits').insert({ ip })
 }
 // ---------------------------------
 
-const SYSTEM_PROMPT = `Eres una IA especializada en descubrimiento de carreras para el mercado laboral de Chile. Analiza los intereses del usuario considerando el contexto chileno y devuelve SOLO un objeto JSON válido (sin markdown, sin bloques de código) con esta estructura exacta:
+const SYSTEM_PROMPT = `Eres una IA de orientación vocacional para Chile especializada en análisis psicológico del lenguaje. Devuelve SOLO JSON válido, sin markdown. Sé conciso: cada descripción máximo 3 oraciones breves.
 
+ANTES de generar las carreras, analiza internamente el texto del usuario aplicando estas técnicas (no las menciones en el JSON, úsalas para decidir qué recomendar):
+
+1. BIG FIVE (Yarkoni 2010): Detecta rasgos en el lenguaje.
+   - Responsabilidad: verbos de proceso, estructura lógica, palabras como "organizar", "planificar", "terminar"
+   - Apertura: lenguaje abstracto, metáforas, curiosidad expresada, variedad de temas
+   - Extraversión: verbos de interacción social, energía, palabras como "gente", "equipo", "evento"
+   - Amabilidad: pronombres inclusivos ("nosotros"), verbos de ayuda, empatía expresada
+   - Neuroticismo: palabras de preocupación, incertidumbre, lenguaje emocional negativo
+
+2. SELF-CONCEPT (NER + frecuencia emocional):
+   - Si usa jerga técnica de forma natural (sin explicarla), infiere competencia real en esa área
+   - La frecuencia y carga emocional de los conceptos importa más que lo que dice explícitamente que "le gusta"
+   - "nosotros" frecuente → perfil colaborativo/liderazgo; "yo" frecuente → perfil independiente/especialista
+
+3. ANÁLISIS SEMÁNTICO:
+   - Sentiment: qué temas generan entusiasmo vs. resignación en su texto
+   - Topic modeling: cuáles son los temas recurrentes aunque no los declare como intereses
+   - Stylometry: nivel de abstracción del pensamiento (operativo vs. estratégico vs. creativo)
+
+Usa estos insights para seleccionar las 3 carreras más alineadas con el perfil REAL de la persona, no solo con lo que declara explícitamente.
+
+Reglas (aplican a TODO el JSON): salarios reales en CLP; universidades chilenas reales (U. de Chile, PUC, USACH, DUOC, INACAP, UDP, UAI, CFTs); adapta al mercado chileno (tecnología, minería, fintech, salud, retail, agroindustria).
+
+Estructura exacta con 3 variaciones (universitarias o no, según el perfil del usuario):
 {
-  "query": "<repite el input del usuario>",
-  "summary": "<resumen de 2-3 oraciones sobre por qué estas carreras encajan, mencionando la demanda o contexto en Chile>",
+  "query": string,
+  "summary": string,
+  "variations": [{
+    "id": string (slug),
+    "title": string,
+    "tagline": string,
+    "description": string,
+    "emoji": string,
+    "match_score": number (70-99),
+    "pros": string[3],
+    "cons": string[2],
+    "skills": string[5],
+    "salary_range": { "junior": number, "mid": number, "senior": number, "currency": "CLP" },
+    "personality_types": string[2] (tipos MBTI),
+    "fun_facts": string[3],
+    "job_demand": "Alta"|"Media"|"Muy Alta",
+    "universities": [{ "name": string, "type": string, "location": string, "program": string }] (exactamente 3),
+    "curriculum": [
+      { "semester": 1, "subjects": string[4-5] },
+      { "semester": 2, "subjects": string[4-5] },
+      { "semester": 3, "subjects": string[4] },
+      { "semester": 4, "subjects": string[4] },
+      { "semester": 5, "subjects": string[3] },
+      { "semester": 6, "subjects": string[3] }
+    ]
+  }]
+}`
+
+// Versión compacta para proveedores con límites TPM bajos (ej. Groq on_demand).
+const COMPACT_SYSTEM_PROMPT = `Eres una IA vocacional para Chile. Devuelve SOLO JSON válido (sin markdown), breve y concreto.
+
+Analiza el texto del usuario con: Big Five, self-concept y señales semánticas (temas, tono, estilo). Recomienda 3 rutas realistas para Chile.
+
+Reglas:
+- Salarios en CLP reales/estimados.
+- Considera universidades e institutos chilenos.
+
+Estructura JSON obligatoria:
+{
+  "query": string,
+  "summary": string,
+  "variations": [{
+    "id": string,
+    "title": string,
+    "tagline": string,
+    "description": string,
+    "emoji": string,
+    "match_score": number,
+    "pros": string[3],
+    "cons": string[2],
+    "skills": string[5],
+    "salary_range": { "junior": number, "mid": number, "senior": number, "currency": "CLP" },
+    "personality_types": string[2],
+    "fun_facts": string[3],
+    "job_demand": "Alta"|"Media"|"Muy Alta",
+    "universities": [{ "name": string, "type": string, "location": string, "program": string }],
+    "curriculum": [
+      { "semester": 1, "subjects": string[4-5] },
+      { "semester": 2, "subjects": string[4-5] },
+      { "semester": 3, "subjects": string[4] },
+      { "semester": 4, "subjects": string[4] },
+      { "semester": 5, "subjects": string[3] },
+      { "semester": 6, "subjects": string[3] }
+    ]
+  }]
+}`
+
+// Para Groq 8B: pedir menos campos reduce truncamientos y mejora parseabilidad.
+const GROQ_MINIMAL_PROMPT = `Eres una IA vocacional para Chile. Devuelve SOLO JSON válido, sin markdown y sin texto extra.
+
+Devuelve exactamente este formato:
+{
+  "query": string,
+  "summary": string,
   "variations": [
     {
-      "id": "<slug como 'diseñador-ux'>",
-      "title": "<Título de Carrera>",
-      "tagline": "<Una línea que capture esta carrera>",
-      "description": "<3-4 oraciones sobre este camino de carrera en Chile: menciona sectores con alta demanda local (tecnología, minería, fintech, salud, retail, agroindustria) y perspectivas del mercado nacional>",
-      "emoji": "<un emoji relevante>",
-      "match_score": <número 70-99>,
-      "pros": ["<ventaja 1>", "<ventaja 2>", "<ventaja 3>"],
-      "cons": ["<desventaja 1>", "<desventaja 2>"],
-      "skills": ["<habilidad 1>", "<habilidad 2>", "<habilidad 3>", "<habilidad 4>", "<habilidad 5>"],
-      "salary_range": {
-        "junior": <sueldo junior en CLP, ej: 800000>,
-        "mid": <sueldo mid en CLP, ej: 1400000>,
-        "senior": <sueldo senior en CLP, ej: 2500000>,
-        "currency": "CLP"
-      },
-      "personality_types": ["<tipo MBTI 1>", "<tipo MBTI 2>"],
-      "fun_facts": ["<dato curioso 1 sobre esta carrera en Chile>", "<dato curioso 2>", "<dato curioso 3>"],
-      "books": [
-        { "title": "<título del libro>", "author": "<autor>", "description": "<por qué leerlo, 1 oración>", "emoji": "<emoji>" },
-        { "title": "<título>", "author": "<autor>", "description": "<por qué>", "emoji": "<emoji>" },
-        { "title": "<título>", "author": "<autor>", "description": "<por qué>", "emoji": "<emoji>" }
-      ],
-      "job_demand": "<Alta|Media|Muy Alta>",
-      "roadmap": [
-        {
-          "phase": "Fundación",
-          "duration": "0-3 meses",
-          "milestones": ["<hito 1 con recursos en Chile>", "<hito 2>"],
-          "theory": ["<tema teórico 1 que hay que dominar en esta fase>", "<tema teórico 2>", "<tema teórico 3>"]
-        },
-        {
-          "phase": "Construcción",
-          "duration": "3-9 meses",
-          "milestones": ["<hito 1 mencionando portafolio o certificaciones>", "<hito 2>"],
-          "theory": ["<tema teórico 1>", "<tema teórico 2>", "<tema teórico 3>"]
-        },
-        {
-          "phase": "Primer trabajo",
-          "duration": "9-18 meses",
-          "milestones": ["<hito 1 mencionando plataformas chilenas como Laborum, GetOnBoard>", "<hito 2>"],
-          "theory": ["<tema teórico 1>", "<tema teórico 2>"]
-        }
-      ],
-      "universities": [
-        { "name": "<nombre institución>", "type": "<Universidad|Instituto|CFT|DUOC>", "location": "<ciudad>", "program": "<nombre del programa o carrera>" },
-        { "name": "<nombre institución>", "type": "<tipo>", "location": "<ciudad>", "program": "<programa>" },
-        { "name": "<nombre institución>", "type": "<tipo>", "location": "<ciudad>", "program": "<programa>" }
-      ]
+      "id": string,
+      "title": string,
+      "tagline": string,
+      "description": string,
+      "emoji": string,
+      "match_score": number,
+      "pros": string[3],
+      "cons": string[2],
+      "skills": string[5],
+      "job_demand": "Alta"|"Media"|"Muy Alta",
+      "salary_range": { "junior": number, "mid": number, "senior": number, "currency": "CLP" }
     }
   ]
 }
 
-Devuelve exactamente 3 variaciones de carrera. Las carreras pueden ser universitarias (ingeniería, medicina, derecho, etc.) O NO universitarias (técnico, oficio, emprendimiento, arte, deporte, etc.) — elige lo que mejor encaje con el perfil del usuario, sin preferencia por títulos formales.
+Reglas:
+- Genera 3 variaciones.
+- match_score entero entre 70 y 99.
+- Todo adaptado a Chile.
+- No inventes datos absurdos ni uses markdown.`
 
-Adapta todo al contexto chileno: salarios reales en CLP, universidades y centros de formación chilenos (U. de Chile, PUC, USACH, DUOC, INACAP, UDP, UAI, CFTs, institutos técnicos), y empresas o sectores locales representativos.
+function extractLikelyJson(raw: string): string {
+  let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+  cleaned = cleaned.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim()
 
-Para personality_types usa tipos MBTI reales (INTJ, ENFP, ISTP, etc.) que suelen destacar en esa carrera.
+  const start = cleaned.indexOf('{')
+  const end = cleaned.lastIndexOf('}')
+  if (start !== -1 && end !== -1 && end > start) {
+    cleaned = cleaned.slice(start, end + 1)
+  }
+  return cleaned
+}
 
-Para books: recomienda SIEMPRE exactamente 3 libros REALES y reconocidos — que existan de verdad y sean ampliamente valorados por crítica, popularidad o por la comunidad del área (bestsellers, clásicos del sector, libros de referencia obligada). NO inventes títulos ni autores. Si la carrera es muy técnica o de nicho y no hay 3 libros de referencia claros, combina libros técnicos con libros de mentalidad o soft skills valorados en ese campo.
+function tryParsePossiblyTruncatedJson(raw: string): any {
+  const cleaned = extractLikelyJson(raw)
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    let fixed = cleaned
+    const quoteBalance = (fixed.match(/"/g) || []).length % 2
+    if (quoteBalance !== 0) fixed += '"'
 
-Sé específico y práctico. Sin formato markdown en la respuesta.`
+    let braces = 0
+    let brackets = 0
+    for (const ch of fixed) {
+      if (ch === '{') braces++
+      else if (ch === '}') braces--
+      else if (ch === '[') brackets++
+      else if (ch === ']') brackets--
+    }
+
+    while (brackets > 0) { fixed += ']'; brackets-- }
+    while (braces > 0) { fixed += '}'; braces-- }
+
+    // Corrige comas colgantes antes de } o ]
+    fixed = fixed.replace(/,\s*([}\]])/g, '$1')
+
+    return JSON.parse(fixed)
+  }
+}
+
+function normalizeDiscoverResult(input: any, fallbackQuery: string) {
+  const safeQuery = String(input?.query || fallbackQuery || '').trim() || fallbackQuery
+  const safeSummary = String(input?.summary || 'Resultado vocacional generado por IA para Chile.').trim()
+  const vars = Array.isArray(input?.variations) ? input.variations : []
+
+  const normalizedVariations = vars.slice(0, 3).map((v: any, idx: number) => {
+    const scoreRaw = Number(v?.match_score)
+    const score = Number.isFinite(scoreRaw)
+      ? Math.max(70, Math.min(99, scoreRaw <= 1 ? Math.round(scoreRaw * 100) : Math.round(scoreRaw)))
+      : 80
+
+    const title = String(v?.title || `Ruta vocacional ${idx + 1}`).trim()
+    const id = String(v?.id || title.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/(^-|-$)/g, '') || `ruta-${idx + 1}`
+
+    const pros = Array.isArray(v?.pros) ? v.pros.filter(Boolean).map(String).slice(0, 3) : []
+    while (pros.length < 3) pros.push('Buena proyección de aprendizaje')
+
+    const cons = Array.isArray(v?.cons) ? v.cons.filter(Boolean).map(String).slice(0, 2) : []
+    while (cons.length < 2) cons.push('Exige constancia y práctica')
+
+    const skills = Array.isArray(v?.skills) ? v.skills.filter(Boolean).map(String).slice(0, 5) : []
+    while (skills.length < 5) skills.push('Aprendizaje continuo')
+
+    const sr = v?.salary_range || {}
+    const salary_range = {
+      junior: Number(sr.junior) || 700000,
+      mid: Number(sr.mid) || 1200000,
+      senior: Number(sr.senior) || 1800000,
+      currency: 'CLP',
+    }
+
+    const roadmap: any[] = []
+
+    return {
+      id,
+      title,
+      tagline: String(v?.tagline || 'Una ruta con futuro en Chile'),
+      description: String(v?.description || 'Ruta recomendada según tu perfil vocacional.'),
+      emoji: String(v?.emoji || '🚀'),
+      match_score: score,
+      pros,
+      cons,
+      skills,
+      salary_range,
+      personality_types: Array.isArray(v?.personality_types) ? v.personality_types.slice(0, 2) : ['INTJ', 'ENTP'],
+      fun_facts: Array.isArray(v?.fun_facts) ? v.fun_facts.slice(0, 3) : ['Tiene alta demanda de talento en Chile', 'Permite crecimiento profesional continuo', 'Combina teoría con aplicación práctica'],
+      books: [],
+      job_demand: (v?.job_demand === 'Muy Alta' || v?.job_demand === 'Alta' || v?.job_demand === 'Media') ? v.job_demand : 'Alta',
+      roadmap: [],
+      universities: Array.isArray(v?.universities) ? v.universities.slice(0, 3) : [],
+      notable_people: [],
+      curriculum: Array.isArray(v?.curriculum) ? v.curriculum.slice(0, 6) : [],
+    }
+  })
+
+  while (normalizedVariations.length < 3) {
+    const i = normalizedVariations.length + 1
+    normalizedVariations.push({
+      id: `ruta-${i}`,
+      title: `Ruta vocacional ${i}`,
+      tagline: 'Alternativa alineada a tu perfil',
+      description: 'Propuesta adicional para ampliar tus opciones de estudio y trabajo.',
+      emoji: '🎯',
+      match_score: 78,
+      pros: ['Buena empleabilidad', 'Ruta flexible', 'Aprendizaje transferible'],
+      cons: ['Requiere disciplina', 'Curva de aprendizaje inicial'],
+      skills: ['Comunicación', 'Pensamiento crítico', 'Trabajo en equipo', 'Resolución de problemas', 'Aprendizaje continuo'],
+      salary_range: { junior: 700000, mid: 1200000, senior: 1800000, currency: 'CLP' },
+      personality_types: ['INTJ', 'ENTP'],
+      fun_facts: ['Opción con demanda estable', 'Permite especialización', 'Tiene salida en varias industrias'],
+      books: [],
+      job_demand: 'Alta',
+      roadmap: [],
+      universities: [],
+      notable_people: [],
+      curriculum: [],
+    })
+  }
+
+  return {
+    query: safeQuery,
+    summary: safeSummary,
+    variations: normalizedVariations,
+  }
+}
+
+async function repairJsonWithProvider(rawText: string, config: ReturnType<typeof useRuntimeConfig>): Promise<string> {
+  const repairPrompt = `Repara este contenido para que sea JSON válido estricto.\n\nReglas:\n- Devuelve SOLO JSON, sin markdown.\n- Mantén la misma estructura esperada (query, summary, variations...).\n- Si está truncado, completa lo faltante de forma breve y coherente.\n- No agregues comentarios.\n\nContenido a reparar:\n${rawText.slice(0, 10000)}`
+
+  if (config.githubToken) {
+    try {
+      const res = await fetch('https://models.github.ai/inference/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({
+          model: 'openai/gpt-4.1-mini',
+          temperature: 0.1,
+          max_tokens: 1800,
+          messages: [
+            { role: 'system', content: 'Eres un reparador de JSON. Devuelve únicamente JSON válido.' },
+            { role: 'user', content: repairPrompt },
+          ],
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.choices?.[0]?.message?.content || ''
+      }
+    } catch {
+      // continúa con Groq
+    }
+  }
+
+  if (config.groqApiKey) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          temperature: 0.1,
+          max_tokens: 1200,
+          messages: [
+            { role: 'system', content: 'Eres un reparador de JSON. Devuelve únicamente JSON válido.' },
+            { role: 'user', content: repairPrompt.slice(0, 7000) },
+          ],
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.choices?.[0]?.message?.content || ''
+      }
+    } catch {
+      // sin más fallback
+    }
+  }
+
+  return ''
+}
 
 export default defineEventHandler(async (event) => {
   const forwarded = getHeader(event, 'x-forwarded-for') ?? ''
@@ -104,7 +354,7 @@ export default defineEventHandler(async (event) => {
     event.node.req.socket?.remoteAddress ||
     'unknown'
 
-  checkRateLimit(ip)
+  await checkRateLimit(ip)
 
   const config = useRuntimeConfig()
   const body = await readBody(event)
@@ -117,20 +367,158 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'La consulta no puede superar los 1000 caracteres.' })
   }
 
-  const userMessage = `Mis intereses y experiencia: ${query.trim()}`
+  const trimmedQuery = query.trim()
+  const userMessage = `Texto de la persona: "${trimmedQuery}"`
   let rawText = ''
 
-  // --- 1. Ollama local (solo si está configurado, solo para desarrollo) ---
-  if (config.ollamaUrl) {
+  // --- 1. GitHub Models / Meta-Llama-3.1-8B-Instruct (PRIORIDAD — rápido) ---
+  if (!rawText && config.githubToken) {
     try {
+      console.log('[KoraChile] Intentando con GitHub Models (Meta-Llama-3.1-8B)...')
+      const llamaRes = await fetch('https://models.github.ai/inference/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({
+          model: 'meta/Meta-Llama-3.1-8B-Instruct',
+          temperature: 0.5,
+          max_tokens: 900,
+          messages: [
+            { role: 'system', content: GROQ_MINIMAL_PROMPT },
+            { role: 'user', content: userMessage },
+          ],
+        }),
+      })
+      if (llamaRes.ok) {
+        const llamaData = await llamaRes.json()
+        rawText = llamaData.choices?.[0]?.message?.content || ''
+        if (rawText) console.log('[KoraChile] ✅ Meta-Llama (GitHub Models) OK')
+        else console.warn('[KoraChile] ⚠️ Meta-Llama respondió vacío')
+      } else {
+        const errBody = await llamaRes.text()
+        console.warn(`[KoraChile] ⚠️ Meta-Llama HTTP ${llamaRes.status}:`, errBody)
+      }
+    } catch (e) {
+      console.warn('[KoraChile] ⚠️ Meta-Llama no disponible — probando GPT-4.1-mini...')
+    }
+  }
+
+  // --- 2. GitHub Models / GPT-4.1-mini (mayor capacidad, fallback) ---
+  if (!rawText && config.githubToken) {
+    try {
+      console.log('[KoraChile] Intentando con GitHub Models (GPT-4.1-mini)...')
+      const ghRes = await fetch('https://models.github.ai/inference/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.githubToken}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(30000),
+        body: JSON.stringify({
+          model: 'openai/gpt-4.1-mini',
+          temperature: 0.7,
+          max_tokens: 3200,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: userMessage },
+          ],
+        }),
+      })
+      if (ghRes.ok) {
+        const ghData = await ghRes.json()
+        rawText = ghData.choices?.[0]?.message?.content || ''
+        if (rawText) console.log('[KoraChile] ✅ GitHub Models GPT-4.1-mini OK')
+        else console.warn('[KoraChile] ⚠️ GPT-4.1-mini respondió vacío')
+      } else {
+        const errBody = await ghRes.text()
+        console.warn(`[KoraChile] ⚠️ GPT-4.1-mini HTTP ${ghRes.status}:`, errBody)
+      }
+    } catch (e) {
+      console.warn('[KoraChile] ⚠️ GPT-4.1-mini no disponible — probando Groq...')
+    }
+  }
+
+  // --- 3. Groq (fallback) ---
+  if (!rawText && config.groqApiKey) {
+    try {
+      console.log('[KoraChile] Intentando con Groq...')
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.groqApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        signal: AbortSignal.timeout(25000),
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          temperature: 0.5,
+          max_tokens: 900,
+          messages: [
+            { role: 'system', content: GROQ_MINIMAL_PROMPT },
+            { role: 'user', content: userMessage },
+          ],
+        }),
+      })
+      if (groqRes.ok) {
+        const groqData = await groqRes.json()
+        rawText = groqData.choices?.[0]?.message?.content || ''
+        if (rawText) console.log('[KoraChile] ✅ Groq OK')
+        else console.warn('[KoraChile] ⚠️ Groq respondió vacío')
+      } else {
+        const errBody = await groqRes.text()
+        console.warn(`[KoraChile] ⚠️ Groq HTTP ${groqRes.status}:`, errBody)
+
+        // Reintento defensivo si excede límite TPM/tamaño.
+        if (groqRes.status === 413 || /Request too large|tokens per minute|TPM/i.test(errBody)) {
+          const safeMessage = `Texto de la persona: "${trimmedQuery.slice(0, 450)}"`
+          const retryRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${config.groqApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            signal: AbortSignal.timeout(25000),
+            body: JSON.stringify({
+              model: 'llama-3.1-8b-instant',
+              temperature: 0.4,
+              max_tokens: 750,
+              messages: [
+                { role: 'system', content: GROQ_MINIMAL_PROMPT },
+                { role: 'user', content: safeMessage },
+              ],
+            }),
+          })
+
+          if (retryRes.ok) {
+            const retryData = await retryRes.json()
+            rawText = retryData.choices?.[0]?.message?.content || ''
+            if (rawText) console.log('[KoraChile] ✅ Groq OK (retry compact)')
+          } else {
+            const retryErr = await retryRes.text()
+            console.warn(`[KoraChile] ⚠️ Groq retry HTTP ${retryRes.status}:`, retryErr)
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[KoraChile] ⚠️ Groq no disponible — probando Ollama...')
+    }
+  }
+
+  // --- 3. Ollama local (fallback) ---
+  if (!rawText && config.ollamaUrl) {
+    try {
+      console.log(`[KoraChile] Intentando con Ollama (${config.ollamaModel})...`)
       const ollamaRes = await fetch(`${config.ollamaUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(8000), // 8s timeout — si no hay Ollama en producción, falla rápido
+        signal: AbortSignal.timeout(60000),
         body: JSON.stringify({
           model: config.ollamaModel,
           temperature: 0.8,
-          max_tokens: 6000,
+          max_tokens: 2200,
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
@@ -140,112 +528,43 @@ export default defineEventHandler(async (event) => {
       if (ollamaRes.ok) {
         const data = await ollamaRes.json()
         rawText = data.choices?.[0]?.message?.content || ''
-        if (rawText) console.log(`[OrientaAI] Respuesta de Ollama (${config.ollamaModel})`)
-      }
-    } catch {
-      console.warn('[OrientaAI] Ollama no disponible, usando OpenRouter...')
-    }
-  }
-
-  // --- 2. OpenRouter con fallback entre modelos gratuitos ---
-  if (!rawText) {
-    if (!config.openrouterApiKey) {
-      throw createError({ statusCode: 500, message: 'OPENROUTER_API_KEY no configurada en el servidor.' })
-    }
-
-    const FREE_MODELS = [
-      'google/gemma-4-31b-it:free',
-      'google/gemma-4-26b-a4b-it:free',
-      'deepseek/deepseek-r1:free',
-      'google/gemini-2.0-flash-exp:free',
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'mistralai/mistral-7b-instruct:free',
-      // Fallback de pago ultra-barato (~$0.00004 por búsqueda)
-      'meta-llama/llama-3.1-8b-instruct',
-    ]
-
-    let lastError = ''
-
-    for (const model of FREE_MODELS) {
-      const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.openrouterApiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://orientaai.cl',
-          'X-Title': 'OrientaAI',
-        },
-        body: JSON.stringify({
-          model,
-          temperature: 0.7,
-          max_tokens: 6000,
-          response_format: { type: 'json_object' },
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userMessage },
-          ],
-        }),
-      })
-
-      if (orResponse.ok) {
-        const orData = await orResponse.json()
-        rawText = orData.choices?.[0]?.message?.content || ''
-        if (rawText) {
-          console.log(`[OrientaAI] Respuesta obtenida con modelo: ${model}`)
-          break
-        }
+        if (rawText) console.log(`[KoraChile] ✅ Ollama (${config.ollamaModel}) OK`)
+        else console.warn('[KoraChile] ⚠️ Ollama respondió vacío')
       } else {
-        const errJson = await orResponse.json().catch(() => null)
-        lastError = `[${model}] HTTP ${orResponse.status}: ${JSON.stringify(errJson)}`
-        console.warn(`[OrientaAI] ${lastError} — probando siguiente modelo...`)
-        continue
+        console.warn(`[KoraChile] ⚠️ Ollama HTTP ${ollamaRes.status}`)
       }
-    }
-
-    if (!rawText) {
-      throw createError({ statusCode: 429, message: 'Todos los modelos están saturados en este momento. Intenta en unos segundos.' })
+    } catch (e) {
+      console.warn('[KoraChile] ⚠️ Ollama no disponible')
     }
   }
 
-  // Parseo robusto: extrae el primer objeto JSON válido aunque haya texto extra o esté truncado
+  if (!rawText) {
+    throw createError({ statusCode: 502, message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica Groq y Ollama.' })
+  }
+
+  // Parseo robusto + autorreparación si el modelo devuelve JSON truncado
   let parsed
   try {
-    // 1. Elimina bloques <think>...</think> (DeepSeek R1 y similares)
-    let cleaned = rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
-    // 2. Limpia bloques de markdown
-    cleaned = cleaned.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim()
-    // 2. Extrae desde el primer '{' hasta el último '}'
-    const start = cleaned.indexOf('{')
-    const end = cleaned.lastIndexOf('}')
-    if (start !== -1 && end !== -1 && end > start) {
-      cleaned = cleaned.slice(start, end + 1)
-    }
-    // 3. Intento directo
-    try {
-      parsed = JSON.parse(cleaned)
-    } catch {
-      // 4. Si está truncado, cierra arrays/objetos abiertos y reintenta
-      let fixed = cleaned
-      // Cierra strings sin cerrar (comilla suelta al final)
-      const quoteBalance = (fixed.match(/"/g) || []).length % 2
-      if (quoteBalance !== 0) fixed += '"'
-      // Cuenta llaves y corchetes abiertos
-      let braces = 0, brackets = 0
-      for (const ch of fixed) {
-        if (ch === '{') braces++
-        else if (ch === '}') braces--
-        else if (ch === '[') brackets++
-        else if (ch === ']') brackets--
-      }
-      // Cierra arrays primero, luego objetos
-      while (brackets > 0) { fixed += ']'; brackets-- }
-      while (braces > 0) { fixed += '}'; braces-- }
-      parsed = JSON.parse(fixed)
-    }
+    parsed = tryParsePossiblyTruncatedJson(rawText)
   } catch {
-    console.error('[OrientaAI] rawText no parseable (primeros 800 chars):\n', rawText?.slice(0, 800))
-    throw createError({ statusCode: 502, message: 'Error al parsear la respuesta de IA como JSON. Revisa la consola del servidor para ver el rawText.' })
+    console.warn('[KoraChile] JSON inválido, intentando reparación automática...')
+    const repairedText = await repairJsonWithProvider(rawText, config)
+
+    try {
+      parsed = tryParsePossiblyTruncatedJson(repairedText)
+      console.log('[KoraChile] ✅ JSON reparado automáticamente')
+    } catch {
+      console.error('[KoraChile] rawText no parseable (primeros 800 chars):\n', rawText?.slice(0, 800))
+      // Fail-soft: evitar 502 y devolver estructura mínima utilizable.
+      parsed = {
+        query: trimmedQuery,
+        summary: 'No se pudo parsear completamente la respuesta de IA. Se entrega una versión simplificada.',
+        variations: [],
+      }
+    }
   }
+
+  parsed = normalizeDiscoverResult(parsed, trimmedQuery)
 
   // ✅ Supabase igual que antes
   const supabase = createClient(

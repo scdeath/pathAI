@@ -1,0 +1,242 @@
+[
+  {
+    "code": 86,
+    "nombre_oficial": "PONTIFICIA UNIVERSIDAD CATOLICA DE CHILE",
+    "aliases": ["uc", "puc", "u católica", "u. católica", "u catolica", "u. catolica", "católica de chile", "catalica de chile", "pontificia católica", "pontificia catolica"]
+  },
+  {
+    "code": 89,
+    "nombre_oficial": "PONTIFICIA UNIVERSIDAD CATOLICA DE VALPARAISO",
+    "aliases": ["pucv", "católica de valparaíso", "catolica de valparaiso", "católica valpo", "catolica valpo"]
+  },
+  {
+    "code": 70,
+    "nombre_oficial": "UNIVERSIDAD DE CHILE",
+    "aliases": ["uch", "uchile", "u. de chile", "u de chile", "universidad de chile"]
+  },
+  {
+    "code": 71,
+    "nombre_oficial": "UNIVERSIDAD DE SANTIAGO DE CHILE",
+    "aliases": ["usach", "u. de santiago", "u de santiago"]
+  },
+  {
+    "code": 87,
+    "nombre_oficial": "UNIVERSIDAD DE CONCEPCION",
+    "aliases": ["udec", "u de concepcion", "u. de concepción"]
+  },
+  {
+    "code": 90,
+    "nombre_oficial": "UNIVERSIDAD AUSTRAL DE CHILE",
+    "aliases": ["uach", "austral", "uaustral"]
+  },
+  {
+    "code": 78,
+    "nombre_oficial": "UNIVERSIDAD DE TALCA",
+    "aliases": ["utal", "u de talca"]
+  },
+  {
+    "code": 74,
+    "nombre_oficial": "UNIVERSIDAD DE LA SERENA",
+    "aliases": ["uls", "u de la serena"]
+  },
+  {
+    "code": 76,
+    "nombre_oficial": "UNIVERSIDAD DE LA FRONTERA",
+    "aliases": ["ufro", "u de la frontera"]
+  },
+  {
+    "code": 85,
+    "nombre_oficial": "UNIVERSIDAD TECNOLOGICA METROPOLITANA",
+    "aliases": ["utem"]
+  },
+  {
+    "code": 3,
+    "nombre_oficial": "UNIVERSIDAD DIEGO PORTALES",
+    "aliases": ["udp", "diego portales"]
+  },
+  {
+    "code": 23,
+    "nombre_oficial": "UNIVERSIDAD ADOLFO IBANEZ",
+    "aliases": ["uai", "adolfo ibáñez", "adolfo ibanez"]
+  },
+  {
+    "code": 20,
+    "nombre_oficial": "UNIVERSIDAD ANDRES BELLO",
+    "aliases": ["unab", "andrés bello", "andres bello"]
+  },
+  {
+    "code": 19,
+    "nombre_oficial": "UNIVERSIDAD DE LAS AMERICAS",
+    "aliases": ["udla", "udela", "u de las américas", "u de las americas"]
+  },
+  {
+    "code": 50,
+    "nombre_oficial": "UNIVERSIDAD BERNARDO O'HIGGINS",
+    "aliases": ["ubo"]
+  },
+  {
+    "code": 10,
+    "nombre_oficial": "UNIVERSIDAD MAYOR",
+    "aliases": ["umayor", "u mayor"]
+  },
+  {
+    "code": 39,
+    "nombre_oficial": "UNIVERSIDAD SAN SEBASTIAN",
+    "aliases": ["uss", "san sebastián", "san sebastian"]
+  },
+  {
+    "code": 91,
+    "nombre_oficial": "UNIVERSIDAD CATOLICA DEL NORTE",
+    "aliases": ["ucn", "católica del norte", "catolica del norte"]
+  },
+  {
+    "code": 82,
+    "nombre_oficial": "UNIVERSIDAD METROPOLITANA DE CIENCIAS DE LA EDUCACION",
+    "aliases": ["umce"]
+  },
+  {
+    "code": 69,
+    "nombre_oficial": "UNIVERSIDAD ALBERTO HURTADO",
+    "aliases": ["uah", "alberto hurtado"]
+  },
+  {
+    "code": 4,
+    "nombre_oficial": "UNIVERSIDAD CENTRAL DE CHILE",
+    "aliases": ["ucentral", "u central", "central de chile"]
+  },
+  {
+    "code": 45,
+    "nombre_oficial": "UNIVERSIDAD DEL DESARROLLO",
+    "aliases": ["udd", "del desarrollo"]
+  },
+  {
+    "code": 84,
+    "nombre_oficial": "UNIVERSIDAD DE LOS LAGOS",
+    "aliases": ["ulagos", "u de los lagos"]
+  },
+  {
+    "code": 88,
+    "nombre_oficial": "UNIVERSIDAD TECNICA FEDERICO SANTA MARIA",
+    "aliases": ["utfsm", "usm", "santa maría", "santa maria", "federico santa maría", "federico santa maria"]
+  },
+  {
+    "code": 34,
+    "nombre_oficial": "UNIVERSIDAD DE LOS ANDES",
+    "aliases": ["uandes", "u de los andes", "los andes"]
+  },
+  {
+    "code": 54,
+    "nombre_oficial": "UNIVERSIDAD TECNOLOGICA DE CHILE INACAP",
+    "aliases": ["inacap universidad", "utci"]
+  },
+  {
+    "code": 111,
+    "nombre_oficial": "INSTITUTO PROFESIONAL DUOC UC",
+    "aliases": ["duoc", "duoc uc"]
+  },
+  {
+    "code": 143,
+    "nombre_oficial": "INSTITUTO PROFESIONAL AIEP",
+    "aliases": ["aiep"]
+  },
+  {
+    "code": 100,
+    "nombre_oficial": "INSTITUTO PROFESIONAL INACAP",
+    "aliases": ["inacap ip"]
+  },
+  {
+    "code": 430,
+    "nombre_oficial": "CENTRO DE FORMACION TECNICA INACAP",
+    "aliases": ["inacap cft"]
+  },
+  {
+    "code": 13,
+    "nombre_oficial": "UNIVERSIDAD SANTO TOMAS",
+    "aliases": ["ust", "santo tomás", "santo tomas"]
+  },
+  {
+    "code": 93,
+    "nombre_oficial": "UNIVERSIDAD CATOLICA DE LA SANTISIMA CONCEPCION",
+    "aliases": ["ucsc", "pucbio", "católica de concepción", "catolica de concepcion"]
+  },
+  {
+    "code": 94,
+    "nombre_oficial": "UNIVERSIDAD CATOLICA DE TEMUCO",
+    "aliases": ["uct", "católica de temuco", "catolica de temuco"]
+  },
+  {
+    "code": 72,
+    "nombre_oficial": "UNIVERSIDAD DE VALPARAISO",
+    "aliases": ["uv", "u de valparaíso", "u de valparaiso"]
+  },
+  {
+    "code": 73,
+    "nombre_oficial": "UNIVERSIDAD DE ANTOFAGASTA",
+    "aliases": ["ua", "u de antofagasta"]
+  },
+  {
+    "code": 111,
+    "nombre_oficial": "INSTITUTO PROFESIONAL DUOC UC",
+    "aliases": ["duoc", "duoc uc", "ip duoc"]
+  },
+  {
+    "code": 143,
+    "nombre_oficial": "INSTITUTO PROFESIONAL AIEP",
+    "aliases": ["aiep", "ip aiep"]
+  },
+  {
+    "code": 100,
+    "nombre_oficial": "INSTITUTO PROFESIONAL INACAP",
+    "aliases": ["inacap ip", "ip inacap"]
+  },
+  {
+    "code": 54,
+    "nombre_oficial": "UNIVERSIDAD TECNOLOGICA DE CHILE INACAP",
+    "aliases": ["inacap universidad", "inacap u", "utci"]
+  },
+  {
+    "code": 430,
+    "nombre_oficial": "CENTRO DE FORMACION TECNICA INACAP",
+    "aliases": ["inacap cft", "cft inacap"]
+  },
+  {
+    "code": 117,
+    "nombre_oficial": "INSTITUTO PROFESIONAL IACC",
+    "aliases": ["iacc"]
+  },
+  {
+    "code": 116,
+    "nombre_oficial": "INSTITUTO PROFESIONAL SANTO TOMAS",
+    "aliases": ["ip santo tomás", "ip santo tomas", "santo tomás ip"]
+  },
+  {
+    "code": 260,
+    "nombre_oficial": "CENTRO DE FORMACION TECNICA SANTO TOMAS",
+    "aliases": ["santo tomás cft", "cft santo tomas"]
+  },
+  {
+    "code": 152,
+    "nombre_oficial": "INSTITUTO PROFESIONAL LATINOAMERICANO DE COMERCIO EXTERIOR - IPLACEX",
+    "aliases": ["iplacex"]
+  },
+  {
+    "code": 162,
+    "nombre_oficial": "INSTITUTO PROFESIONAL SAN SEBASTIAN",
+    "aliases": ["ip san sebastián", "ip san sebastian"]
+  },
+  {
+    "code": 113,
+    "nombre_oficial": "INSTITUTO PROFESIONAL IPG",
+    "aliases": ["ipg"]
+  },
+  {
+    "code": 106,
+    "nombre_oficial": "INSTITUTO PROFESIONAL PROVIDENCIA",
+    "aliases": ["ipp", "ip providencia"]
+  },
+  {
+    "code": 155,
+    "nombre_oficial": "INSTITUTO PROFESIONAL LOS LEONES",
+    "aliases": ["los leones", "ip los leones"]
+  }
+]

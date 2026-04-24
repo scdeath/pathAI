@@ -71,15 +71,23 @@ const analysisMessages = [
 
 const analysisPhase = ref('Procesando tus intereses...')
 
+let phaseTimer: ReturnType<typeof setInterval>
+let msgTimer: ReturnType<typeof setInterval>
+
 onMounted(() => {
   // Cambiar fase cada 1.5s
-  setInterval(() => {
+  phaseTimer = setInterval(() => {
     currentPhaseIndex.value = (currentPhaseIndex.value + 1) % phases.length
   }, 1500)
 
   // Cambiar mensaje cada 1s
-  setInterval(() => {
+  msgTimer = setInterval(() => {
     analysisPhase.value = analysisMessages[Math.floor(Math.random() * analysisMessages.length)]
   }, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(phaseTimer)
+  clearInterval(msgTimer)
 })
 </script>

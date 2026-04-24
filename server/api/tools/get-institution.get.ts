@@ -1,0 +1,97 @@
+/**
+ * GET /api/tools/get-institution?nombre=...&institution_code=...
+ *
+ * Devuelve ficha completa de una institución (universidad, IP o CFT)
+ * con matrícula, retención, titulados, dirección, acreditación, etc.
+ *
+ * Uso típico desde el chat: "¿Cuántos matriculados tiene la Universidad X?"
+ *                           "¿Dónde queda la sede de la Universidad Y?"
+ */
+import { createClient } from '@supabase/supabase-js'
+import { resolveInstitution } from '~/server/utils/institution-resolver'
+
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const { nombre, institution_code } = getQuery(event) as Record<string, string>
+
+  if (!nombre && !institution_code) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Debe entregar `nombre` o `institution_code`.',
+    })
+  }
+
+  // Si viene nombre pero no code, intenta resolver (alias/sigla -> code)
+  let resolvedCode = institution_code ? Number(institution_code) : null
+  if (!resolvedCode && nombre) {
+    const supabaseResolver = createClient(
+      config.public.supabaseUrl,
+      config.supabaseServiceKey || config.public.supabaseAnonKey,
+    )
+    const r = await resolveInstitution(supabaseResolver, nombre)
+    if (r) resolvedCode = r.institution_code
+  }
+
+  const supabase = createClient(
+    config.public.supabaseUrl,
+    config.supabaseServiceKey || config.public.supabaseAnonKey,
+  )
+
+  let q = supabase
+    .from('institutions')
+    .select(`
+      institution_code, nombre_institucion, tipo_institucion, autonomia,
+      direccion_sede_central, pagina_web, rut,
+      acreditacion_estado, acreditacion_anos,
+      acreditacion_vigencia_desde, acreditacion_vigencia_hasta,
+      acreditacion_areas, acreditacion_areas_electivas,
+      matricula_pregrado_actual, matricula_posgrado_actual,
+      titulados_pregrado_actual, retencion_1er_ano_pct,
+      duracion_formal_semestres, duracion_real_semestres,
+      promedio_nem, promedio_paes, total_jce,
+      m2_construidos, volumenes_biblioteca,
+      laboratorios_talleres, computadores,
+      ingresos_operacion_clp, resultado_ejercicio_clp,
+      total_activos_clp, patrimonio_total_clp,
+      matricula_pregrado_por_ano, matricula_posgrado_por_ano,
+      titulados_pregrado_por_ano, titulados_posgrado_por_ano,
+      matricula_pct_por_area, matricula_pct_por_origen,
+      jce_por_nivel_academico
+    `)
+    .limit(5)
+
+  if (resolvedCode) {
+    q = q.eq('institution_code', resolvedCode)
+  } else {
+    q = q.ilike('nombre_institucion', `%${nombre}%`)
+  }
+
+  const { data, error } = await q
+  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+
+  const withCasaCentral = (row: any) => ({
+    ...row,
+    casa_central: row.direccion_sede_central ?? null,
+  })
+
+  if (!data?.length) return { match: 'none', candidates: [] }
+
+  // Si hay match único o exacto, devolver ficha completa.
+  // Si hay varios, devolver lista resumida para que la IA pida confirmación.
+  if (data.length === 1) return { match: 'exact', institution: withCasaCentral(data[0]) }
+
+  const exact = data.find(d =>
+    nombre && d.nombre_institucion?.toLowerCase() === nombre.toLowerCase(),
+  )
+  if (exact) return { match: 'exact', institution: withCasaCentral(exact) }
+
+  return {
+    match: 'multiple',
+    candidates: data.map(d => ({
+      institution_code: d.institution_code,
+      nombre_institucion: d.nombre_institucion,
+      tipo_institucion: d.tipo_institucion,
+      direccion_sede_central: d.direccion_sede_central,
+    })),
+  }
+})

@@ -199,7 +199,7 @@ function generateRoadmapHTML(career: any): string {
       <div class="header">
         <h1>${career.emoji} ${career.title}</h1>
         <p class="tagline">${career.tagline}</p>
-        <p class="meta">Generado el ${now} | OrientaAI</p>
+        <p class="meta">Generado el ${now} | KoraChile</p>
       </div>
       
       <div class="description">
@@ -231,7 +231,7 @@ function generateRoadmapHTML(career: any): string {
       
       <div class="footer">
         <p>Este roadmap es personalizado según tu perfil. Sigue el plan paso a paso y alcanzarás tu objetivo.</p>
-        <p style="margin-top: 10px;">www.orientaai.cl</p>
+        <p style="margin-top: 10px;">www.KoraChile.cl</p>
       </div>
     </body>
   </html>
@@ -298,7 +298,7 @@ function generateComparisonHTML(careers: any[]): string {
   <html>
     <head>
       <meta charset="UTF-8">
-      <title>Comparación de Carreras - OrientaAI</title>
+      <title>Comparación de Carreras - KoraChile</title>
       <style>
         * {
           margin: 0;
@@ -369,7 +369,7 @@ function generateComparisonHTML(careers: any[]): string {
     <body>
       <div class="header">
         <h1>Comparación de Carreras</h1>
-        <p class="meta">Generado el ${now} | OrientaAI</p>
+        <p class="meta">Generado el ${now} | KoraChile</p>
       </div>
       
       ${tableHTML}

@@ -7,7 +7,17 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "seed": "npx tsx convertidor/scripts/seed-careers-from-data.ts",
+    "seed:ai": "npx tsx convertidor/scripts/seed-careers.ts",
+    "fix:encoding": "npx tsx convertidor/scripts/fix-text-encoding.ts",
+    "import": "npx tsx convertidor/scripts/import-careers.ts",
+    "import:mineduc": "npx tsx scripts/import-mineduc.ts",
+    "embeddings": "npx tsx scripts/generate-embeddings.ts",
+    "embeddings:institutions": "npx tsx scripts/generate-embeddings.ts --table=institutions",
+    "embeddings:careers": "npx tsx scripts/generate-embeddings.ts --table=career_generic",
+    "embeddings:programs": "npx tsx scripts/generate-embeddings.ts --table=programs",
+    "embeddings:reset": "npx tsx scripts/generate-embeddings.ts --reset"
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",
@@ -15,8 +25,14 @@
     "@supabase/supabase-js": "^2.45.0",
     "@vueuse/core": "^11.0.0",
     "@vueuse/nuxt": "^11.0.0",
+    "@xenova/transformers": "^2.0.1",
     "dotenv": "^17.4.1",
+    "lucide-vue-next": "^1.0.0",
+    "marked": "^18.0.2",
     "nuxt": "^3.13.0",
     "pinia": "^2.2.0"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
   }
 }
