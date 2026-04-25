@@ -148,6 +148,8 @@ const store = useCareerStore()
 const supabase = useSupabaseClient()
 
 const id = route.params.id as string
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isValidUuid = UUID_RE.test(id)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -162,6 +164,12 @@ useHead({
 })
 
 onMounted(async () => {
+  // If id is not a valid UUID (e.g. "local" when DB save failed), use store data
+  if (!isValidUuid) {
+    if (!store.result) await navigateTo('/')
+    return
+  }
+
   if (store.result && store.sessionId === id) return
 
   loading.value = true

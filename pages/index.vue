@@ -392,7 +392,7 @@ const data = await $fetch<{ sessionId: string; result: any }>('/api/discover', {
   body: { query },
 })
     store.setResult(data.result, data.sessionId)
-    await router.push(`/results/${data.sessionId}`)
+    await router.push(`/results/${data.sessionId ?? 'local'}`)
   } catch (err: any) {
     const message = err?.data?.message || err?.message || 'Algo salió mal. Por favor intenta de nuevo.'
     store.setError(message)
