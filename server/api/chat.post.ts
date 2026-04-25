@@ -454,7 +454,7 @@ export default defineEventHandler(async (event) => {
   }
 
   if (!config.githubToken && !config.groqApiKey) {
-    throw createError({ statusCode: 500, message: 'No hay API key configurada.' })
+    throw createError({ statusCode: 500, message: 'No hay API key configurada. Define APY_GIT (GitHub Models) o GROQ en las variables de entorno.' })
   }
 
   const systemPrompt = buildSystemPrompt(careersContext)
@@ -554,7 +554,7 @@ INSTRUCCIONES:
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const pruned = pruneToolHistory(conversation)
     const data = await callLLM(config, pruned, tools)
-    if (!data) throw createError({ statusCode: 502, message: 'La IA no devolvió respuesta.' })
+    if (!data) throw createError({ statusCode: 502, message: 'No se obtuvo respuesta de ningún proveedor de IA. Verifica que APY_GIT (GitHub Models) o GROQ estén configurados correctamente.' })
 
     const msg = data.choices?.[0]?.message
     if (!msg) throw createError({ statusCode: 502, message: 'Respuesta de IA vacía.' })
